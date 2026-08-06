@@ -1,0 +1,42 @@
+CREATE TABLE ships (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(120) NOT NULL,
+  imo_number VARCHAR(20) UNIQUE NOT NULL,
+  vessel_type VARCHAR(80) NOT NULL,
+  route VARCHAR(160) NOT NULL,
+  status VARCHAR(40) NOT NULL DEFAULT 'active',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE sensor_readings (
+  id SERIAL PRIMARY KEY,
+  ship_id INTEGER NOT NULL REFERENCES ships(id),
+  recorded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  engine_temperature NUMERIC(6, 2) NOT NULL,
+  fuel_usage NUMERIC(8, 2) NOT NULL,
+  rpm INTEGER NOT NULL,
+  speed NUMERIC(5, 2) NOT NULL,
+  vibration NUMERIC(6, 3) NOT NULL,
+  latitude NUMERIC(9, 6) NOT NULL,
+  longitude NUMERIC(9, 6) NOT NULL,
+  weather_status VARCHAR(80) NOT NULL
+);
+
+CREATE TABLE alerts (
+  id SERIAL PRIMARY KEY,
+  ship_id INTEGER NOT NULL REFERENCES ships(id),
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  severity VARCHAR(20) NOT NULL,
+  alert_type VARCHAR(80) NOT NULL,
+  message TEXT NOT NULL,
+  acknowledged BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+CREATE TABLE predictions (
+  id SERIAL PRIMARY KEY,
+  ship_id INTEGER NOT NULL REFERENCES ships(id),
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  failure_probability NUMERIC(5, 2) NOT NULL,
+  health_score NUMERIC(5, 2) NOT NULL,
+  recommendation TEXT NOT NULL
+);
