@@ -1,0 +1,53 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ship_dashboard
+      POSTGRES_USER: ship_admin
+      POSTGRES_PASSWORD: ship_password
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ship_admin -d ship_dashboard"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - ../database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ../database/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+
+  backend:
+    build: ../backend
+    environment:
+      PORT: 8000
+      AI_SERVICE_URL: http://ai-service:8001
+      DATABASE_URL: postgres://ship_admin:ship_password@postgres:5432/ship_dashboard
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../backend:/app
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ai-service:
+        condition: service_started
+
+  ai-service:
+    build: ../ai-service
+    ports:
+      - "8001:8001"
+    volumes:
+      - ../ai-service:/app
+
+  frontend:
+    build: ../frontend
+    environment:
+      VITE_API_URL: http://localhost:8000
+    ports:
+      - "5173:5173"
+    volumes:
+      - ../frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
